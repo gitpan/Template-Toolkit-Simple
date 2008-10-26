@@ -43,28 +43,16 @@ TEMPLATE NAME
 
     This:
 
-        tt->render('foo/bar/baz.tt');
-        > tt-render foo/bar/baz.tt  # command line version
+        tt->render('foo//bar/baz.tt');
+        > tt-render foo//bar/baz.tt  # command line version
 
     is the same as:
 
         tt->include_path('foo/')->render('bar/baz.tt');
         > tt-render --include_path=foo/ bar/baz.tt  # command line version
 
-    This behaviour will only happen if you have not set the include_path and
-    the file name has a directory, and the file path does not begin with '.'
-    or '/'.
-
-    If this is not the behaviour you want, you can do one of the following
-    to defeat it:
-
-        tt->include_path([])->render('foo/bar/baz.tt');
-        > tt-render --include_path= foo/bar/baz.tt  # command line version
-
-    or:
-
-        tt->render('./foo/bar/baz.tt');
-        > tt-render ./foo/bar/baz.tt  # command line version
+    Use a double slash to separate the path from the template. This is handy
+    because tab completion should work after you specify the '//'.
 
 EXPORTED SUBROUTINES
     tt  Simply returns a new Template::Toolkit::Simple object. This is
@@ -199,6 +187,6 @@ POD ERRORS
     Hey! The above document had some coding errors, which are explained
     below:
 
-    Around line 252:
+    Around line 275:
         Unterminated C<...> sequence
 

@@ -1,4 +1,4 @@
-use t::TestSimple tests => 2;
+use t::TestSimple tests => 3;
 
 filters {
     command => [qw(chomp run_command)],
@@ -32,6 +32,10 @@ __DATA__
 === Render
 --- command
 tt-render --post-chomp --data=t/render.yaml --path=t/template/ letter.tt
+--- result
+=== Render with path//template
+--- command
+tt-render --post-chomp --data=t/render.yaml t/template//letter.tt
 --- result
 === Options abbreviated
 --- command

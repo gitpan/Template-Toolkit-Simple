@@ -16,4 +16,4 @@ no_index:
 requires:
   Template: 0
   perl: 5.8.3
-version: 0.01
+version: 0.02

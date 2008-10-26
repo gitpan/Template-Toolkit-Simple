@@ -1,4 +1,10 @@
 ---
+version: 0.02
+date:    Sat Oct 25 17:47:04 PDT 2008
+changes:
+- Make all TT options work.
+- Support path//template shorcut syntax.
+---
 version: 0.01
 date:    Fri Sep 26 01:40:13 PDT 2008
 changes:

@@ -3,7 +3,7 @@ use Template::Constants qw( :debug );
 use strict;
 use warnings;
 
-our $VERSION = '0.01';
+our $VERSION = '0.02';
 
 use Template;
 use Getopt::Long;
@@ -37,7 +37,6 @@ my $default = {
     blocks => undef,
     auto_reset => 1,
     recursion => 0,
-    eval_perl => 0,
     pre_process => undef,
     post_process => undef,
     process_template => undef,
@@ -92,6 +91,11 @@ sub render {
     my $self = shift;
     my $template = shift
       or die "render method requires a template name";
+    if ($template =~ qr{//}) {
+        my $path;
+        ($path, $template) = split '//', $template, 2;
+        $self->include_path($path);
+    }
     $self->data(shift(@_)) if @_;
 
     if ($self->{output}) {
@@ -119,13 +123,32 @@ sub process {
     my $self = shift;
 
     $self->{tt} = Template->new(
-        INCLUDE_PATH => $self->{include_path},
-        PRE_CHOMP => $self->{pre_chomp},
-        POST_CHOMP => $self->{post_chomp},
-        EVAL_PERL => $self->{eval_perl},
-        DEBUG => ($self->{debug} && DEBUG_ALL ^ DEBUG_CALLER ^ DEBUG_CONTEXT),
-#         START_TAG => $self->{start_tag},
-#         END_TAG => $self->{end_tag},
+        INCLUDE_PATH        => $self->{include_path},
+        EVAL_PERL           => $self->{eval_perl},
+#         START_TAG           => $self->{start_tag},
+#         END_TAG             => $self->{end_tag},
+        PRE_CHOMP           => $self->{pre_chomp},
+        POST_CHOMP          => $self->{post_chomp},
+        TRIM                => $self->{trim},
+        INTERPOLATE         => $self->{interpolate},
+        ANYCASE             => $self->{anycase},
+        DELIMITER           => $self->{delimiter},
+        ABSOLUTE            => $self->{absolute},
+        RELATIVE            => $self->{relative},
+        DEFAULT             => $self->{default},
+        BLOCKS              => $self->{blocks},
+        AUTO_RESET          => $self->{auto_reset},
+        RECURSION           => $self->{recursion},
+        PRE_PROCESS         => $self->{pre_process},
+        POST_PROCESS        => $self->{post_process},
+        PROCESS_TEMPLATE    => $self->{process_template},
+        ERROR_TEMPLATE      => $self->{error_template},
+        OUTPUT_PATH         => $self->{output_path},
+        DEBUG               =>
+            ($self->{debug} && DEBUG_ALL ^ DEBUG_CALLER ^ DEBUG_CONTEXT),
+        CACHE_SIZE          => $self->{cache_size},
+        COMPILE_EXT         => $self->{compile_ext},
+        COMPILE_DIR         => $self->{compile_dir},
     );
 
     return $self->{tt}->process(@_);
@@ -256,28 +279,16 @@ these together.
 
 This:
 
-    tt->render('foo/bar/baz.tt');
-    > tt-render foo/bar/baz.tt  # command line version
+    tt->render('foo//bar/baz.tt');
+    > tt-render foo//bar/baz.tt  # command line version
 
 is the same as:
 
     tt->include_path('foo/')->render('bar/baz.tt');
     > tt-render --include_path=foo/ bar/baz.tt  # command line version
 
-This behaviour will only happen if you have not set the include_path and
-the file name has a directory, and the file path does not begin with
-'.' or '/'.
-
-If this is not the behaviour you want, you can do one of the following
-to defeat it:
-
-    tt->include_path([])->render('foo/bar/baz.tt');
-    > tt-render --include_path= foo/bar/baz.tt  # command line version
-
-or:
-
-    tt->render('./foo/bar/baz.tt');
-    > tt-render ./foo/bar/baz.tt  # command line version
+Use a double slash to separate the path from the template. This is handy
+because tab completion should work after you specify the '//'.
 
 =head1 EXPORTED SUBROUTINES
 
