@@ -3,7 +3,7 @@ use Template::Constants qw( :debug );
 use strict;
 use warnings;
 
-our $VERSION = '0.02';
+our $VERSION = '0.03';
 
 use Template;
 use Getopt::Long;
@@ -97,6 +97,7 @@ sub render {
         $self->include_path($path);
     }
     $self->data(shift(@_)) if @_;
+    $self->output(shift(@_)) if @_;
 
     if ($self->{output}) {
         $self->process($template, $self->{data}, $self->{output})
