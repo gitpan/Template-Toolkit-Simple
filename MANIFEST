@@ -34,4 +34,3 @@ t/render.t
 t/render.yaml
 t/template/letter.tt
 t/template/signature.tt
-t/TestSimple.pm
