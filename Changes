@@ -1,4 +1,27 @@
 ---
+version: 0.07
+date:    Tue Sep 14 23:06:07 PDT 2010
+changes:
+- Switched testing from Test::Base to TestML
+- 0.04 - 0.06 never made it to CPAN :\
+- Added new toys to Makefile.PL
+---
+version: 0.06
+date:    Mon Apr 27 16:57:55 PDT 2009
+changes:
+- Encode stuff was a mistake. Reverting.
+---
+version: 0.05
+date:    Sun Apr 26 19:06:13 PDT 2009
+changes:
+- Add usage text for command line help.
+- Fixed utf8 encoding. Hopefully.
+---
+version: 0.04
+date:    Fri Nov  7 14:44:23 PST 2008
+changes:
+- Support start_tag and end_tag.
+---
 version: 0.03
 date:    Mon Oct 27 17:02:25 PDT 2008
 changes:

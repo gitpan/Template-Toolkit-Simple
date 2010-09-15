@@ -2,8 +2,9 @@ package Template::Toolkit::Simple;
 use Template::Constants qw( :debug );
 use strict;
 use warnings;
+use 5.008003;
 
-our $VERSION = '0.03';
+our $VERSION = '0.07';
 
 use Template;
 use Getopt::Long;
@@ -22,8 +23,8 @@ my $default = {
 
     include_path => undef,
     eval_perl => 0,
-    start_tag => ',
-    end_tag => ',
+    start_tag => quotemeta('[' . '%'),
+    end_tag => quotemeta('%' . ']'),
     tag_style => 'template',
     pre_chomp => 0,
     post_chomp => 0,
@@ -111,6 +112,15 @@ sub render {
     return $output;
 }
 
+sub usage {
+    return <<'...'
+Usage:
+
+    tt-render --path=path/to/templates/ --data=data.yaml foo.tt2
+
+...
+}
+
 sub croak {
     my $self = shift;
     require Carp;
@@ -126,8 +136,8 @@ sub process {
     $self->{tt} = Template->new(
         INCLUDE_PATH        => $self->{include_path},
         EVAL_PERL           => $self->{eval_perl},
-#         START_TAG           => $self->{start_tag},
-#         END_TAG             => $self->{end_tag},
+        START_TAG           => $self->{start_tag},
+        END_TAG             => $self->{end_tag},
         PRE_CHOMP           => $self->{pre_chomp},
         POST_CHOMP          => $self->{post_chomp},
         TRIM                => $self->{trim},
@@ -211,6 +221,8 @@ sub _run_command {
         my ($name, $value) = @_;
         my $method = lc($name);
         $method =~ s/-/_/g;
+        $value = quotemeta($value)
+            if $method =~ /_tag$/;
         $self->$method($value);
     };
     GetOptions(
@@ -220,7 +232,7 @@ sub _run_command {
             $option .= "|$option2" if $option2 =~ s/_/-/g;
             $option .= "|$abbreviations->{$_}"
                 if defined $abbreviations->{$_};
-            $option .= ((not defined $default->{$_}) ? '=s' : '');
+            $option .= ((not defined $default->{$_} or $option =~/\-tag$/) ? '=s' : '');
             ($option, $setter);
         } keys %$default
     );
@@ -273,7 +285,7 @@ an error occurs, it is printed to STDERR.
 
 =head1 TEMPLATE NAME
 
-When using Template::Toolkit::Simple or C<tt-render), the most common
+When using Template::Toolkit::Simple or C<tt-render>, the most common
 parameters you will use are the main template file name and the
 directory of supporting templates. As a convenience, you can specify
 these together.
@@ -398,9 +410,9 @@ string containing multiple directories separated by ':'.
 This is a shorter name for C<include_path>. It does the exact
 same thing.
 
-=item start_tag() -- Default is '
+=item start_tag() -- Default is '[%'
 
-=item end_tag() -- Default is '
+=item end_tag() -- Default is '%]'
 
 =item tag_style() -- Default is 'template'
 
@@ -458,11 +470,11 @@ method returns the error message on a failure.
 
 =head1 AUTHOR
 
-Ingy döt Net <ingy@cpan.org>
+Ingy dÃ¶t Net <ingy@cpan.org>
 
 =head1 COPYRIGHT
 
-Copyright (c) 2008. Ingy döt Net.
+Copyright (c) 2009. Ingy dÃ¶t Net.
 
 This program is free software; you can redistribute it and/or modify it
 under the same terms as Perl itself.
