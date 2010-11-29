@@ -12,6 +12,7 @@ inc/Module/Install/Metadata.pm
 inc/Module/Install/ReadmeFromPod.pm
 inc/Module/Install/Scripts.pm
 inc/Module/Install/TestML.pm
+inc/Module/Install/VersionCheck.pm
 inc/Module/Install/Win32.pm
 inc/Module/Install/WriteAll.pm
 inc/Pegex/Base.pm
@@ -34,3 +35,4 @@ t/render.t
 t/render.yaml
 t/template/letter.tt
 t/template/signature.tt
+t/use_ok.t

@@ -8,7 +8,7 @@ use Module::Install::Base;
 
 use vars qw($VERSION @ISA);
 BEGIN {
-    $VERSION = '0.11';
+    $VERSION = '0.14';
     @ISA     = 'Module::Install::Base';
 }
 
@@ -18,7 +18,7 @@ sub manifest_skip {
     my $self = shift;
     return unless $self->is_admin;
 
-    print "Updating $skip_file\n";
+    print "manifest_skip\n";
 
     my $keepers;
     if (-e $skip_file) {
@@ -68,9 +68,12 @@ sub _skip_files {
 ^notes
 ^todo
 ^ToDo$
-\.DS_Store$ ## avoid OS X finder files
-\.kpf$ ## skip komodo project files
-~$ ## ignore emacs and vim backup files
+## avoid OS X finder files
+\.DS_Store$
+## skip komodo project files
+\.kpf$
+## ignore emacs and vim backup files
+~$
 ...
 }
 
@@ -78,4 +81,4 @@ sub _skip_files {
 
 =encoding utf8
 
-#line 132
+#line 135

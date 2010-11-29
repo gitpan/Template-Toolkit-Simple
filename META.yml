@@ -18,9 +18,12 @@ no_index:
   directory:
     - inc
     - t
+recommends:
+  YAML::XS: 0
 requires:
   Template: 0
   perl: 5.8.3
 resources:
   license: http://dev.perl.org/licenses/
-version: 0.08
+  repository: git://github.com/ingydotnet/template-toolkit-simple-pm.git
+version: 0.10
