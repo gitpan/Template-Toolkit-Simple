@@ -7,7 +7,7 @@ build_requires:
 configure_requires:
   ExtUtils::MakeMaker: 6.42
 distribution_type: module
-generated_by: 'Module::Install version 1.00'
+generated_by: 'Module::Install version 1.02'
 license: perl
 meta-spec:
   url: http://module-build.sourceforge.net/META-spec-v1.4.html
@@ -18,12 +18,15 @@ no_index:
   directory:
     - inc
     - t
-recommends:
-  YAML::XS: 0
 requires:
-  Template: 0
+  Template: 2.22
+  YAML::XS: 0.37
   perl: 5.8.3
 resources:
+  homepage: https://github.com/ingydotnet/template-toolkit-simple-pm/tree
   license: http://dev.perl.org/licenses/
-  repository: git://github.com/ingydotnet/template-toolkit-simple-pm.git
-version: 0.13
+  repository:
+    type: git
+    url: git://github.com/ingydotnet/template-toolkit-simple-pm.git
+    web: https://github.com/ingydotnet/template-toolkit-simple-pm/tree
+version: 0.14

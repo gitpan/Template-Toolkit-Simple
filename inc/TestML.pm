@@ -1,15 +1,27 @@
 #line 1
-package TestML;
+##
+# name:      TestML
+# author:    Ingy döt Net <ingy@cpan.org>
+# abstract:  A Generic Software Testing Meta Language
+# license:   perl
+# copyright: 2009, 2010, 2011
+# see:
+# - http://www.testml.org/
+# - irc://irc.freenode.net#testml 
+
+use 5.006001;
 use strict;
 use warnings;
-use 5.006001;
+
+use Pegex 0.18 ();
+
+package TestML;
 
 use TestML::Runtime;
 
-$TestML::VERSION = '0.21';
+our $VERSION = '0.24';
 
-our @EXPORT = qw(str num bool list WWW XXX YYY ZZZ);
-
+use constant XXX_skip => 1;
 our $DumpModule = 'YAML::XS';
 sub WWW { require XXX; local $XXX::DumpModule = $DumpModule; XXX::WWW(@_) }
 sub XXX { require XXX; local $XXX::DumpModule = $DumpModule; XXX::XXX(@_) }
@@ -30,10 +42,6 @@ sub import {
 
     strict->import;
     warnings->import;
-
-    if (@_ > 1 and $_[1] eq '-base') {
-        goto &TestML::Base::import;
-    }
 
     my $pkg = shift;
     while (@_) {
@@ -103,13 +111,20 @@ sub import {
         }
     }
 
-    require Exporter;
-    @_ = ($pkg);
-    goto &Exporter::import;
+    no strict 'refs';
+    my $p = caller;
+    *{$p.'::str'} = \&str;
+    *{$p.'::num'} = \&num;
+    *{$p.'::bool'} = \&bool;
+    *{$p.'::list'} = \&list;
+
+    if (not defined &{$pkg.'::XXX'}) {
+        *{$p.'::WWW'} = \&WWW;
+        *{$p.'::XXX'} = \&XXX;
+        *{$p.'::YYY'} = \&YYY;
+        *{$p.'::ZZZ'} = \&ZZZ;
+    }
 }
 
 1;
 
-=encoding utf-8
-
-#line 207

@@ -34,8 +34,6 @@ use from the command line to render templates with all the power of the
 Perl object. All of the object methods become command line arguments in
 the command line version.
 
-=encoding utf8
-
 =head1 COMMAND LINE USAGE
 
 This command renders the named file and prints the output to STDOUT. If
@@ -192,6 +190,8 @@ same thing.
 =item absolute() -- Default is 0
 
 =item relative() -- Default is 0
+
+=item strict() -- Default is 0
 
 =item default() -- Default is undef
 
