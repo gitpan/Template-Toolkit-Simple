@@ -14,6 +14,7 @@ inc/Module/Install/Win32.pm
 inc/Module/Install/WriteAll.pm
 inc/Module/Package.pm
 inc/Pegex/Grammar.pm
+inc/Pegex/Input.pm
 inc/Pegex/Mo.pm
 inc/Pegex/Parser.pm
 inc/Pegex/Receiver.pm
@@ -34,8 +35,12 @@ MANIFEST			This list of files
 META.yml
 README
 t/cli.t
-t/render.t
+t/render.json
+t/render.xml
 t/render.yaml
+t/render_json.t
+t/render_xml.t
+t/render_yaml.t
 t/template/letter.tt
 t/template/signature.tt
 t/use_ok.t
