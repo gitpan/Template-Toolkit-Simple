@@ -1,32 +1,31 @@
 ---
 abstract: 'A Simple Interface to Template Toolkit'
 author:
-  - 'Ingy döt Net <ingy@cpan.org>'
-build_requires:
-  ExtUtils::MakeMaker: 6.42
+  - 'Ingy döt net <ingy@cpan.org>'
+build_requires: {}
 configure_requires:
-  ExtUtils::MakeMaker: 6.42
-distribution_type: module
-generated_by: 'Module::Install version 1.02'
+  ExtUtils::MakeMaker: '6.30'
+dynamic_config: 0
+generated_by: 'Dist::Zilla version 5.019, CPAN::Meta::Converter version 2.132830'
 license: perl
 meta-spec:
   url: http://module-build.sourceforge.net/META-spec-v1.4.html
-  version: 1.4
-module_name: Template::Toolkit::Simple
+  version: '1.4'
 name: Template-Toolkit-Simple
 no_index:
   directory:
     - inc
     - t
+    - xt
+recommends:
+  JSON::XS: '0'
+  XML::Simple: '0'
 requires:
-  Template: 2.22
-  YAML::XS: 0.37
-  perl: 5.8.3
+  Template: '2.22'
+  YAML::XS: '0.37'
+  perl: v5.8.1
 resources:
-  homepage: https://github.com/ingydotnet/template-toolkit-simple-pm/tree
-  license: http://dev.perl.org/licenses/
-  repository:
-    type: git
-    url: git://github.com/ingydotnet/template-toolkit-simple-pm.git
-    web: https://github.com/ingydotnet/template-toolkit-simple-pm/tree
-version: 0.16
+  bugtracker: https://github.com/ingydotnet/template-toolkit-simple-pm/issues
+  homepage: https://github.com/ingydotnet/template-toolkit-simple-pm
+  repository: https://github.com/ingydotnet/template-toolkit-simple-pm.git
+version: '0.17'

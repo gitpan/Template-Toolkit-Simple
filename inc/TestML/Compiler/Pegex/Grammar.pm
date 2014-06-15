@@ -1,11 +1,19 @@
-#line 1
-package TestML::Grammar;
-use TestML::Mo;
+package TestML::Compiler::Pegex::Grammar;
+
+use TestML::Base;
 extends 'Pegex::Grammar';
 
-sub tree_ {
+use constant file => '../testml-pgx/testml.pgx';
+
+sub make_tree {
   {
-    '+top' => 'testml_document',
+    '+grammar' => 'testml',
+    '+include' => 'atom',
+    '+toprule' => 'testml_document',
+    '+version' => '0.0.1',
+    '__' => {
+      '.rgx' => qr/\G(?:[\ \t]|\r?\n|\#.*\r?\n)+/
+    },
     'assertion_call' => {
       '.any' => [
         {
@@ -23,7 +31,7 @@ sub tree_ {
       ]
     },
     'assertion_call_test' => {
-      '.rgx' => qr/(?-xism:\G(?:\.(?:[\ \t]|\r?\n|\#.*\r?\n)*|(?:[\ \t]|\r?\n|\#.*\r?\n)*\.)(?:EQ|OK|HAS))/
+      '.rgx' => qr/\G(?:\.(?:[\ \t]|\r?\n|\#.*\r?\n)*|(?:[\ \t]|\r?\n|\#.*\r?\n)*\.)(?:EQ|OK|HAS)/
     },
     'assertion_eq' => {
       '.any' => [
@@ -40,31 +48,31 @@ sub tree_ {
     'assertion_function_eq' => {
       '.all' => [
         {
-          '.rgx' => qr/(?-xism:\G(?:\.(?:[\ \t]|\r?\n|\#.*\r?\n)*|(?:[\ \t]|\r?\n|\#.*\r?\n)*\.)EQ\()/
+          '.rgx' => qr/\G(?:\.(?:[\ \t]|\r?\n|\#.*\r?\n)*|(?:[\ \t]|\r?\n|\#.*\r?\n)*\.)EQ\(/
         },
         {
           '.ref' => 'code_expression'
         },
         {
-          '.rgx' => qr/(?-xism:\G\))/
+          '.rgx' => qr/\G\)/
         }
       ]
     },
     'assertion_function_has' => {
       '.all' => [
         {
-          '.rgx' => qr/(?-xism:\G(?:\.(?:[\ \t]|\r?\n|\#.*\r?\n)*|(?:[\ \t]|\r?\n|\#.*\r?\n)*\.)HAS\()/
+          '.rgx' => qr/\G(?:\.(?:[\ \t]|\r?\n|\#.*\r?\n)*|(?:[\ \t]|\r?\n|\#.*\r?\n)*\.)HAS\(/
         },
         {
           '.ref' => 'code_expression'
         },
         {
-          '.rgx' => qr/(?-xism:\G\))/
+          '.rgx' => qr/\G\)/
         }
       ]
     },
     'assertion_function_ok' => {
-      '.rgx' => qr/(?-xism:\G(?:\.(?:[\ \t]|\r?\n|\#.*\r?\n)*|(?:[\ \t]|\r?\n|\#.*\r?\n)*\.)(OK)(?:\((?:[\ \t]|\r?\n|\#.*\r?\n)*\))?)/
+      '.rgx' => qr/\G(?:\.(?:[\ \t]|\r?\n|\#.*\r?\n)*|(?:[\ \t]|\r?\n|\#.*\r?\n)*\.)(OK)(?:\((?:[\ \t]|\r?\n|\#.*\r?\n)*\))?/
     },
     'assertion_has' => {
       '.any' => [
@@ -84,7 +92,7 @@ sub tree_ {
     'assertion_operator_eq' => {
       '.all' => [
         {
-          '.rgx' => qr/(?-xism:\G(?:[\ \t]|\r?\n|\#.*\r?\n)+==(?:[\ \t]|\r?\n|\#.*\r?\n)+)/
+          '.rgx' => qr/\G(?:[\ \t]|\r?\n|\#.*\r?\n)+==(?:[\ \t]|\r?\n|\#.*\r?\n)+/
         },
         {
           '.ref' => 'code_expression'
@@ -94,7 +102,7 @@ sub tree_ {
     'assertion_operator_has' => {
       '.all' => [
         {
-          '.rgx' => qr/(?-xism:\G(?:[\ \t]|\r?\n|\#.*\r?\n)+~~(?:[\ \t]|\r?\n|\#.*\r?\n)+)/
+          '.rgx' => qr/\G(?:[\ \t]|\r?\n|\#.*\r?\n)+\~\~(?:[\ \t]|\r?\n|\#.*\r?\n)+/
         },
         {
           '.ref' => 'code_expression'
@@ -107,18 +115,21 @@ sub tree_ {
           '.ref' => 'variable_name'
         },
         {
-          '.rgx' => qr/(?-xism:\G\s+=\s+)/
+          '.rgx' => qr/\G\s+=\s+/
         },
         {
           '.ref' => 'code_expression'
         },
         {
-          '.ref' => 'semicolon'
+          '.ref' => 'ending'
         }
       ]
     },
     'blank_line' => {
-      '.rgx' => qr/(?-xism:\G[\ \t]*\r?\n)/
+      '.rgx' => qr/\G[\ \t]*\r?\n/
+    },
+    'blanks' => {
+      '.rgx' => qr/\G[\ \t]+/
     },
     'block_header' => {
       '.all' => [
@@ -129,7 +140,7 @@ sub tree_ {
           '+max' => 1,
           '.all' => [
             {
-              '.rgx' => qr/(?-xism:\G[\ \t]+)/
+              '.ref' => 'blanks'
             },
             {
               '.ref' => 'block_label'
@@ -137,7 +148,7 @@ sub tree_ {
           ]
         },
         {
-          '.rgx' => qr/(?-xism:\G[\ \t]*\r?\n)/
+          '.ref' => 'blank_line'
         }
       ]
     },
@@ -145,7 +156,7 @@ sub tree_ {
       '.ref' => 'unquoted_string'
     },
     'block_marker' => {
-      '.rgx' => qr/(?-xism:\G===)/
+      '.rgx' => qr/\G===/
     },
     'block_point' => {
       '.any' => [
@@ -157,8 +168,76 @@ sub tree_ {
         }
       ]
     },
+    'call_argument' => {
+      '.ref' => 'code_expression'
+    },
+    'call_argument_list' => {
+      '.all' => [
+        {
+          '.rgx' => qr/\G\((?:[\ \t]|\r?\n|\#.*\r?\n)*/
+        },
+        {
+          '+max' => 1,
+          '.all' => [
+            {
+              '.ref' => 'call_argument'
+            },
+            {
+              '+min' => 0,
+              '-flat' => 1,
+              '.all' => [
+                {
+                  '.rgx' => qr/\G(?:[\ \t]|\r?\n|\#.*\r?\n)*,(?:[\ \t]|\r?\n|\#.*\r?\n)*/
+                },
+                {
+                  '.ref' => 'call_argument'
+                }
+              ]
+            }
+          ]
+        },
+        {
+          '.rgx' => qr/\G(?:[\ \t]|\r?\n|\#.*\r?\n)*\)/
+        }
+      ]
+    },
+    'call_call' => {
+      '.all' => [
+        {
+          '+asr' => -1,
+          '.ref' => 'assertion_call_test'
+        },
+        {
+          '.ref' => 'call_indicator'
+        },
+        {
+          '.ref' => 'code_object'
+        }
+      ]
+    },
     'call_indicator' => {
-      '.rgx' => qr/(?-xism:\G(?:\.(?:[\ \t]|\r?\n|\#.*\r?\n)*|(?:[\ \t]|\r?\n|\#.*\r?\n)*\.))/
+      '.rgx' => qr/\G(?:\.(?:[\ \t]|\r?\n|\#.*\r?\n)*|(?:[\ \t]|\r?\n|\#.*\r?\n)*\.)/
+    },
+    'call_name' => {
+      '.any' => [
+        {
+          '.ref' => 'user_call'
+        },
+        {
+          '.ref' => 'core_call'
+        }
+      ]
+    },
+    'call_object' => {
+      '.all' => [
+        {
+          '.ref' => 'call_name'
+        },
+        {
+          '+max' => 1,
+          '.ref' => 'call_argument_list'
+        }
+      ]
     },
     'code_expression' => {
       '.all' => [
@@ -167,7 +246,7 @@ sub tree_ {
         },
         {
           '+min' => 0,
-          '.ref' => 'unit_call'
+          '.ref' => 'call_call'
         }
       ]
     },
@@ -186,7 +265,7 @@ sub tree_ {
           '.ref' => 'number_object'
         },
         {
-          '.ref' => 'transform_object'
+          '.ref' => 'call_object'
         }
       ]
     },
@@ -194,7 +273,7 @@ sub tree_ {
       '+min' => 0,
       '.any' => [
         {
-          '.rgx' => qr/(?-xism:\G(?:[\ \t]|\r?\n|\#.*\r?\n)+)/
+          '.ref' => '__'
         },
         {
           '.ref' => 'assignment_statement'
@@ -214,15 +293,15 @@ sub tree_ {
           '.ref' => 'assertion_call'
         },
         {
-          '.ref' => 'semicolon'
+          '.ref' => 'ending'
         }
       ]
     },
     'comment' => {
-      '.rgx' => qr/(?-xism:\G\#.*\r?\n)/
+      '.rgx' => qr/\G\#.*\r?\n/
     },
-    'core_transform' => {
-      '.rgx' => qr/(?-xism:\G([A-Z]\w*))/
+    'core_call' => {
+      '.rgx' => qr/\G([A-Z]\w*)/
     },
     'data_block' => {
       '.all' => [
@@ -252,7 +331,21 @@ sub tree_ {
       '.ref' => 'data_block'
     },
     'double_quoted_string' => {
-      '.rgx' => qr/(?-xism:\G(?:"((?:[^\n\\"]|\\"|\\\\|\\[0nt])*?)"))/
+      '.rgx' => qr/\G(?:"((?:[^\n\\"]|\\"|\\\\|\\[0nt])*?)")/
+    },
+    'ending' => {
+      '.any' => [
+        {
+          '.rgx' => qr/\G(?:;|\r?\n)/
+        },
+        {
+          '+asr' => 1,
+          '.ref' => 'ending2'
+        }
+      ]
+    },
+    'ending2' => {
+      '.rgx' => qr/\G(?:[\ \t]|\r?\n|\#.*\r?\n)*\}/
     },
     'function_object' => {
       '.all' => [
@@ -267,7 +360,7 @@ sub tree_ {
           '+min' => 0,
           '.any' => [
             {
-              '.rgx' => qr/(?-xism:\G(?:[\ \t]|\r?\n|\#.*\r?\n)+)/
+              '.ref' => '__'
             },
             {
               '.ref' => 'assignment_statement'
@@ -278,36 +371,48 @@ sub tree_ {
           ]
         },
         {
-          '.rgx' => qr/(?-xism:\G(?:[\ \t]|\r?\n|\#.*\r?\n)*\})/
+          '.rgx' => qr/\G(?:[\ \t]|\r?\n|\#.*\r?\n)*\}/
         }
       ]
     },
     'function_signature' => {
       '.all' => [
         {
-          '.rgx' => qr/(?-xism:\G\((?:[\ \t]|\r?\n|\#.*\r?\n)*)/
+          '.rgx' => qr/\G\((?:[\ \t]|\r?\n|\#.*\r?\n)*/
         },
         {
           '+max' => 1,
           '.ref' => 'function_variables'
         },
         {
-          '.rgx' => qr/(?-xism:\G(?:[\ \t]|\r?\n|\#.*\r?\n)*\))/
+          '.rgx' => qr/\G(?:[\ \t]|\r?\n|\#.*\r?\n)*\)/
         }
       ]
     },
     'function_start' => {
-      '.rgx' => qr/(?-xism:\G(?:[\ \t]|\r?\n|\#.*\r?\n)*(\{)(?:[\ \t]|\r?\n|\#.*\r?\n)*)/
+      '.rgx' => qr/\G(?:[\ \t]|\r?\n|\#.*\r?\n)*(\{)(?:[\ \t]|\r?\n|\#.*\r?\n)*/
     },
     'function_variable' => {
-      '.rgx' => qr/(?-xism:\G([a-zA-Z]\w*))/
+      '.rgx' => qr/\G([a-zA-Z]\w*)/
     },
     'function_variables' => {
-      '+min' => 1,
-      '.ref' => 'function_variable',
-      '.sep' => {
-        '.rgx' => qr/(?-xism:\G(?:[\ \t]|\r?\n|\#.*\r?\n)*,(?:[\ \t]|\r?\n|\#.*\r?\n)*)/
-      }
+      '.all' => [
+        {
+          '.ref' => 'function_variable'
+        },
+        {
+          '+min' => 0,
+          '-flat' => 1,
+          '.all' => [
+            {
+              '.rgx' => qr/\G(?:[\ \t]|\r?\n|\#.*\r?\n)*,(?:[\ \t]|\r?\n|\#.*\r?\n)*/
+            },
+            {
+              '.ref' => 'function_variable'
+            }
+          ]
+        }
+      ]
     },
     'lines_point' => {
       '.all' => [
@@ -315,13 +420,13 @@ sub tree_ {
           '.ref' => 'point_marker'
         },
         {
-          '.rgx' => qr/(?-xism:\G[\ \t]+)/
+          '.ref' => 'blanks'
         },
         {
           '.ref' => 'point_name'
         },
         {
-          '.rgx' => qr/(?-xism:\G[\ \t]*\r?\n)/
+          '.ref' => 'blank_line'
         },
         {
           '.ref' => 'point_lines'
@@ -329,7 +434,7 @@ sub tree_ {
       ]
     },
     'number' => {
-      '.rgx' => qr/(?-xism:\G([0-9]+))/
+      '.rgx' => qr/\G([0-9]+)/
     },
     'number_object' => {
       '.ref' => 'number'
@@ -340,36 +445,36 @@ sub tree_ {
           '.ref' => 'point_marker'
         },
         {
-          '.rgx' => qr/(?-xism:\G[\ \t]+)/
+          '.ref' => 'blanks'
         },
         {
           '.ref' => 'point_name'
         },
         {
-          '.rgx' => qr/(?-xism:\G:[\ \t])/
+          '.rgx' => qr/\G:[\ \t]/
         },
         {
           '.ref' => 'point_phrase'
         },
         {
-          '.rgx' => qr/(?-xism:\G\r?\n)/
+          '.rgx' => qr/\G\r?\n/
         },
         {
-          '.rgx' => qr/(?-xism:\G(?:\#.*\r?\n|[\ \t]*\r?\n)*)/
+          '.rgx' => qr/\G(?:\#.*\r?\n|[\ \t]*\r?\n)*/
         }
       ]
     },
     'point_lines' => {
-      '.rgx' => qr/(?-xism:\G((?:(?!===|\-\-\-).*\r?\n)*))/
+      '.rgx' => qr/\G((?:(?!===|\-\-\-).*\r?\n)*)/
     },
     'point_marker' => {
-      '.rgx' => qr/(?-xism:\G\-\-\-)/
+      '.rgx' => qr/\G\-\-\-/
     },
     'point_name' => {
-      '.rgx' => qr/(?-xism:\G([a-z]\w*|[A-Z]\w*))/
+      '.rgx' => qr/\G([a-z]\w*|[A-Z]\w*)/
     },
     'point_object' => {
-      '.rgx' => qr/(?-xism:\G(\*[a-z]\w*))/
+      '.rgx' => qr/\G(\*[a-z]\w*)/
     },
     'point_phrase' => {
       '.ref' => 'unquoted_string'
@@ -384,18 +489,8 @@ sub tree_ {
         }
       ]
     },
-    'semicolon' => {
-      '.any' => [
-        {
-          '.rgx' => qr/(?-xism:\G;)/
-        },
-        {
-          '.err' => 'You seem to be missing a semicolon'
-        }
-      ]
-    },
     'single_quoted_string' => {
-      '.rgx' => qr/(?-xism:\G(?:'((?:[^\n\\']|\\'|\\\\)*?)'))/
+      '.rgx' => qr/\G(?:'((?:[^\n\\']|\\'|\\\\)*?)')/
     },
     'string_object' => {
       '.ref' => 'quoted_string'
@@ -411,69 +506,16 @@ sub tree_ {
         }
       ]
     },
-    'transform_argument' => {
-      '.ref' => 'code_expression'
-    },
-    'transform_argument_list' => {
-      '.all' => [
-        {
-          '.rgx' => qr/(?-xism:\G\((?:[\ \t]|\r?\n|\#.*\r?\n)*)/
-        },
-        {
-          '+min' => 0,
-          '.ref' => 'transform_argument',
-          '.sep' => {
-            '.rgx' => qr/(?-xism:\G(?:[\ \t]|\r?\n|\#.*\r?\n)*,(?:[\ \t]|\r?\n|\#.*\r?\n)*)/
-          }
-        },
-        {
-          '.rgx' => qr/(?-xism:\G(?:[\ \t]|\r?\n|\#.*\r?\n)*\))/
-        }
-      ]
-    },
-    'transform_name' => {
-      '.any' => [
-        {
-          '.ref' => 'user_transform'
-        },
-        {
-          '.ref' => 'core_transform'
-        }
-      ]
-    },
-    'transform_object' => {
-      '.all' => [
-        {
-          '.ref' => 'transform_name'
-        },
-        {
-          '+max' => 1,
-          '.ref' => 'transform_argument_list'
-        }
-      ]
-    },
-    'unit_call' => {
-      '.all' => [
-        {
-          '+asr' => -1,
-          '.ref' => 'assertion_call_test'
-        },
-        {
-          '.ref' => 'call_indicator'
-        },
-        {
-          '.ref' => 'code_object'
-        }
-      ]
-    },
     'unquoted_string' => {
-      '.rgx' => qr/(?-xism:\G([^\ \t\n\#](?:[^\n\#]*[^\ \t\n\#])?))/
+      '.rgx' => qr/\G([^\ \t\n\#](?:[^\n\#]*[^\ \t\n\#])?)/
     },
-    'user_transform' => {
-      '.rgx' => qr/(?-xism:\G([a-z]\w*))/
+    'user_call' => {
+      '.rgx' => qr/\G([a-z]\w*)/
     },
     'variable_name' => {
-      '.rgx' => qr/(?-xism:\G([a-zA-Z]\w*))/
+      '.rgx' => qr/\G([a-zA-Z]\w*)/
     }
   }
 }
+
+1;

@@ -1,28 +1,42 @@
-use TestML -run,
-    -require_or_skip => 'YAML::XS';
+use TestML;
 
-sub run_command {
-    my $command = shift->value;
-    open my $execution, "$^X bin/$command |"
-      or die "Couldn't open subprocess: $!\n";
-    local $/;
-    my $output = <$execution>;
-    close $execution;
-    return $output;
-}
+TestML->new(
+    testml => do { local $/; <DATA> },
+    bridge => 'main',
+)->run;
 
-sub expected {
-    return <<'...';
+{
+    package main;
+    use base 'TestML::Bridge';
+    use TestML::Util;
+
+    sub run_command {
+        my ($self, $command) = @_;
+        $command = $command->value;
+        if (-d 'test') {
+            $command =~ s/\bt\b/test/g;
+        }
+        open my $execution, "$^X bin/$command |"
+        or die "Couldn't open subprocess: $!\n";
+        local $/;
+        my $output = <$execution>;
+        close $execution;
+        return str $output;
+    }
+
+    sub expected {
+        return str <<'...';
 Hi Löver,
 
 Have a nice day.
 
 Smööches, Ingy
 ...
+    }
 }
 
 __DATA__
-%TestML 1.0
+%TestML 0.1.0
 
 Plan = 3;
 

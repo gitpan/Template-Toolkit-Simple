@@ -1,19 +1,35 @@
-use TestML -run,
-    -require_or_skip => 'JSON::XS';
+{
+    use Test::More;
+    eval "use JSON::XS; 1" or
+        plan skip_all => 'JSON::XS required';
+}
 
-use Template::Toolkit::Simple;
+use TestML;
 
-sub render_template {
-    my $context = shift;
-    return tt
-        ->post_chomp
-        ->path('t/template')
-        ->data('t/render.json')
-        ->render($context->value);
+TestML->new(
+    testml => do { local $/; <DATA> },
+    bridge => 'main',
+)->run;
+
+{
+    package main;
+    use base 'TestML::Bridge';
+    use TestML::Util;
+    use Template::Toolkit::Simple;
+
+    sub render_template {
+        my ($self, $context) = @_;
+        my $testdir = -d 'test' ? 'test' : 't';
+        return str tt
+            ->post_chomp
+            ->path("$testdir/template")
+            ->data("$testdir/render.json")
+            ->render($context->value);
+    }
 }
 
 __DATA__
-%TestML 1.0
+%TestML 0.1.0
 
 Plan = 1;
 
