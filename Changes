@@ -1,3 +1,6 @@
+0.18 Mon Jun 16 15:46:07 PDT 2014
+ - Switch to manual versioning
+
 0.17 Sun Jun 15 12:04:29 PDT 2014
  - Move to Zilla::Dist
 

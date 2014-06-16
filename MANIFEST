@@ -21,6 +21,7 @@ inc/TestML/Compiler/Lite.pm
 inc/TestML/Compiler/Pegex.pm
 inc/TestML/Compiler/Pegex/AST.pm
 inc/TestML/Compiler/Pegex/Grammar.pm
+inc/TestML/Library.pm
 inc/TestML/Library/Debug.pm
 inc/TestML/Library/Standard.pm
 inc/TestML/Runtime.pm
