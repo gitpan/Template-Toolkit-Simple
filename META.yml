@@ -29,4 +29,4 @@ resources:
   bugtracker: https://github.com/ingydotnet/template-toolkit-simple-pm/issues
   homepage: https://github.com/ingydotnet/template-toolkit-simple-pm
   repository: https://github.com/ingydotnet/template-toolkit-simple-pm.git
-version: '0.18'
+version: '0.19'
