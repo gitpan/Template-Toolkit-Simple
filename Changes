@@ -1,3 +1,8 @@
+0.20 Mon Aug  4 00:35:28 PDT 2014
+ - Remove (c) from Copyright
+ - Move doc to swim
+ - Fix Meta and add Contributing
+
 0.19 Wed Jun 18 11:23:29 PDT 2014
  - Tests using TestML needed 'inc'
 

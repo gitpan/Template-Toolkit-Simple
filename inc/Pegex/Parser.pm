@@ -31,40 +31,45 @@ has farthest => 0;
 has throw_on_error => 1;
 
 sub parse {
+    # XXX Add an optional $position argument. Default to 0. This is the
+    # position to start parsing. Set position and farthest below to this
+    # value. Allows for sub-parsing. Need to somehow return the finishing
+    # position of a subparse. Maybe this all goes in a subparse() method.
     my ($self, $input, $start) = @_;
 
-    if ($start) {
-        $start =~ s/-/_/g;
-    }
+    $start =~ s/-/_/g if $start;
 
     $self->{position} = 0;
     $self->{farthest} = 0;
 
-    if (not ref $input or not UNIVERSAL::isa($input, 'Pegex::Input')) {
-        $input = Pegex::Input->new(string => $input);
-    }
-    $self->{input} = $input;
-    $self->{input}->open unless $self->{input}{_is_open};
+    $self->{input} = (not ref $input)
+      ? Pegex::Input->new(string => $input)
+      : $input;
+
+    $self->{input}->open
+        unless $self->{input}{_is_open};
     $self->{buffer} = $self->{input}->read;
-    $self->{length} = length ${$self->{buffer}};
 
-    die "No 'grammar'. Can't parse" unless $self->{grammar};
+    die "No 'grammar'. Can't parse"
+        unless $self->{grammar};
 
-    $self->{grammar}{tree} = $self->{grammar}->make_tree
-        unless defined $self->{grammar}{tree};
+    $self->{grammar}{tree} ||= $self->{grammar}->make_tree;
 
     my $start_rule_ref = $start ||
         $self->{grammar}{tree}{'+toprule'} ||
-        ($self->{grammar}{tree}{'TOP'} ? 'TOP' : undef)
-            or die "No starting rule for Pegex::Parser::parse";
+        $self->{grammar}{tree}{'TOP'} & 'TOP' or
+        die "No starting rule for Pegex::Parser::parse";
 
-    die "No 'receiver'. Can't parse" unless $self->{receiver};
+    die "No 'receiver'. Can't parse"
+        unless $self->{receiver};
 
-    Pegex::Optimizer->new(
+    my $optimizer = Pegex::Optimizer->new(
         parser => $self,
         grammar => $self->{grammar},
         receiver => $self->{receiver},
-    )->optimize_grammar($start_rule_ref);
+    );
+
+    $optimizer->optimize_grammar($start_rule_ref);
 
     # Add circular ref and weaken it.
     $self->{receiver}{parser} = $self;
@@ -76,11 +81,14 @@ sub parse {
         $self->{receiver}->initial();
     }
 
-    my $match = $self->match_ref($start_rule_ref, {});
+    my $match = $self->debug ? do {
+        my $method = $optimizer->make_trace_wrapper(\&match_ref);
+        $self->$method($start_rule_ref, {'+asr' => 0});
+    } : $self->match_ref($start_rule_ref, {});
 
     $self->{input}->close;
 
-    if (not $match or $self->{position} < $self->{length}) {
+    if (not $match or $self->{position} < length ${$self->{buffer}}) {
         $self->throw_error("Parse document failed for some reason");
         return;  # In case $self->throw_on_error is off
     }
@@ -88,11 +96,10 @@ sub parse {
     if ($self->{receiver}->can("final")) {
         $self->{rule} = $start_rule_ref;
         $self->{parent} = {};
-        # XXX mismatch with ruby port
         $match = [ $self->{receiver}->final(@$match) ];
     }
 
-    return $match->[0];
+    $match->[0];
 }
 
 sub match_next {
@@ -131,17 +138,32 @@ sub match_next {
     }
 
     # YYY ($result ? $next->{'-skip'} ? [] : $match : 0) if $main::x;
-    return ($result ? $next->{'-skip'} ? [] : $match : 0);
+    ($result ? $next->{'-skip'} ? [] : $match : 0);
+}
+
+sub match_rule {
+    my ($self, $position, $match) = (@_, []);
+    $self->{position} = $position;
+    $self->{farthest} = $position
+        if $position > $self->{farthest};
+    $match = [ $match ] if @$match > 1;
+    my ($ref, $parent) = @{$self}{'rule', 'parent'};
+    my $rule = $self->{grammar}{tree}{$ref}
+        or die "No rule defined for '$ref'";
+
+    [ $rule->{action}->($self->{receiver}, @$match) ];
 }
 
 sub match_ref {
     my ($self, $ref, $parent) = @_;
     my $rule = $self->{grammar}{tree}{$ref}
         or die "No rule defined for '$ref'";
-    my $match = $self->match_next($rule) or return 0;
+    my $match = $self->match_next($rule) or return;
     return $Pegex::Constant::Dummy unless $rule->{action};
     @{$self}{'rule', 'parent'} = ($ref, $parent);
-    # XXX API mismatch
+
+    # XXX Possible API mismatch.
+    # Not sure if we should "splat" the $match.
     [ $rule->{action}->($self->{receiver}, @$match) ];
 }
 
@@ -150,15 +172,17 @@ sub match_rgx {
     my $buffer = $self->{buffer};
 
     pos($$buffer) = $self->{position};
+    $$buffer =~ /$regexp/g or return;
 
-    $$buffer =~ /$regexp/g or return 0;
     $self->{position} = pos($$buffer);
+
+    $self->{farthest} = $self->{position}
+        if $self->{position} > $self->{farthest};
 
     no strict 'refs';
     my $match = [ map $$_, 1..$#+ ];
     $match = [ $match ] if $#+ > 1;
-    $self->{farthest} = $self->{position}
-        if $self->{position} > $self->{farthest};
+
     return $match;
 }
 
@@ -177,7 +201,7 @@ sub match_all {
         else {
             $self->{farthest} = $position
                 if ($self->{position} = $position) > $self->{farthest};
-            return 0;
+            return;
         }
     }
     $set = [ $set ] if $len > 1;
@@ -191,30 +215,12 @@ sub match_any {
             return $match;
         }
     }
-    return 0;
+    return;
 }
 
 sub match_err {
     my ($self, $error) = @_;
     $self->throw_error($error);
-}
-
-sub match_ref_trace {
-    my ($self, $ref, $parent) = @_;
-    my $asr = $parent->{'+asr'};
-    my $note =
-        $asr == -1 ? '(!)' :
-        $asr == 1 ? '(=)' :
-        '';
-    $self->trace("try_$ref$note");
-    my $result;
-    if ($result = $self->match_ref($ref)) {
-        $self->trace("got_$ref$note");
-    }
-    else {
-        $self->trace("not_$ref$note");
-    }
-    return $result;
 }
 
 sub trace {
@@ -225,7 +231,8 @@ sub trace {
     print STDERR ' ' x $self->{indent};
     $self->{indent}++ if $indent;
     my $snippet = substr(${$self->{buffer}}, $self->{position});
-    $snippet = substr($snippet, 0, 30) . "..." if length $snippet > 30;
+    $snippet = substr($snippet, 0, 30) . "..."
+        if length $snippet > 30;
     $snippet =~ s/\n/\\n/g;
     print STDERR sprintf("%-30s", $action) .
         ($indent ? " >$snippet<\n" : "\n");
@@ -266,6 +273,16 @@ Error parsing Pegex document:
   ${\ (' ' x (length($pretext) + 10) . '^')}
   position: $position ($real_pos pre-lookahead)
 ...
+}
+
+# TODO Move this to a Parser helper role/subclass
+sub line_column {
+    my ($self, $position) = @_;
+    $position ||= $self->{position};
+    my $buffer = $self->{buffer};
+    my $line = @{[substr($$buffer, 0, $position) =~ /(\n)/g]} + 1;
+    my $column = $position - rindex($$buffer, "\n", $position);
+    return [$line, $position];
 }
 
 1;
