@@ -37,39 +37,38 @@ sub parse {
     # position of a subparse. Maybe this all goes in a subparse() method.
     my ($self, $input, $start) = @_;
 
-    $start =~ s/-/_/g if $start;
+    if ($start) {
+        $start =~ s/-/_/g;
+    }
 
     $self->{position} = 0;
     $self->{farthest} = 0;
 
-    $self->{input} = (not ref $input)
-      ? Pegex::Input->new(string => $input)
-      : $input;
-
-    $self->{input}->open
-        unless $self->{input}{_is_open};
+    if (not ref $input or not UNIVERSAL::isa($input, 'Pegex::Input')) {
+        $input = Pegex::Input->new(string => $input);
+    }
+    $self->{input} = $input;
+    $self->{input}->open unless $self->{input}{_is_open};
     $self->{buffer} = $self->{input}->read;
+    $self->{length} = length ${$self->{buffer}};
 
-    die "No 'grammar'. Can't parse"
-        unless $self->{grammar};
+    die "No 'grammar'. Can't parse" unless $self->{grammar};
 
-    $self->{grammar}{tree} ||= $self->{grammar}->make_tree;
+    $self->{grammar}{tree} = $self->{grammar}->tree;
 
     my $start_rule_ref = $start ||
         $self->{grammar}{tree}{'+toprule'} ||
-        $self->{grammar}{tree}{'TOP'} & 'TOP' or
-        die "No starting rule for Pegex::Parser::parse";
+        ($self->{grammar}{tree}{'TOP'} ? 'TOP' : undef)
+            or die "No starting rule for Pegex::Parser::parse";
 
-    die "No 'receiver'. Can't parse"
-        unless $self->{receiver};
+    die "No 'receiver'. Can't parse" unless $self->{receiver};
 
-    my $optimizer = Pegex::Optimizer->new(
+    $self->{optimizer} = Pegex::Optimizer->new(
         parser => $self,
         grammar => $self->{grammar},
         receiver => $self->{receiver},
     );
-
-    $optimizer->optimize_grammar($start_rule_ref);
+    $self->{optimizer}->optimize_grammar($start_rule_ref);
 
     # Add circular ref and weaken it.
     $self->{receiver}{parser} = $self;
@@ -82,13 +81,13 @@ sub parse {
     }
 
     my $match = $self->debug ? do {
-        my $method = $optimizer->make_trace_wrapper(\&match_ref);
+        my $method = $self->{optimizer}->make_trace_wrapper(\&match_ref);
         $self->$method($start_rule_ref, {'+asr' => 0});
     } : $self->match_ref($start_rule_ref, {});
 
     $self->{input}->close;
 
-    if (not $match or $self->{position} < length ${$self->{buffer}}) {
+    if (not $match or $self->{position} < $self->{length}) {
         $self->throw_error("Parse document failed for some reason");
         return;  # In case $self->throw_on_error is off
     }
@@ -96,10 +95,11 @@ sub parse {
     if ($self->{receiver}->can("final")) {
         $self->{rule} = $start_rule_ref;
         $self->{parent} = {};
+        # XXX mismatch with ruby port
         $match = [ $self->{receiver}->final(@$match) ];
     }
 
-    $match->[0];
+    return $match->[0];
 }
 
 sub match_next {
@@ -138,14 +138,14 @@ sub match_next {
     }
 
     # YYY ($result ? $next->{'-skip'} ? [] : $match : 0) if $main::x;
-    ($result ? $next->{'-skip'} ? [] : $match : 0);
+    return ($result ? $next->{'-skip'} ? [] : $match : 0);
 }
 
 sub match_rule {
     my ($self, $position, $match) = (@_, []);
     $self->{position} = $position;
-    $self->{farthest} = $position
-        if $position > $self->{farthest};
+    $self->{farthest} = $self->{position}
+        if $self->{position} > $self->{farthest};
     $match = [ $match ] if @$match > 1;
     my ($ref, $parent) = @{$self}{'rule', 'parent'};
     my $rule = $self->{grammar}{tree}{$ref}
@@ -172,17 +172,15 @@ sub match_rgx {
     my $buffer = $self->{buffer};
 
     pos($$buffer) = $self->{position};
+
     $$buffer =~ /$regexp/g or return;
-
     $self->{position} = pos($$buffer);
-
-    $self->{farthest} = $self->{position}
-        if $self->{position} > $self->{farthest};
 
     no strict 'refs';
     my $match = [ map $$_, 1..$#+ ];
     $match = [ $match ] if $#+ > 1;
-
+    $self->{farthest} = $self->{position}
+        if $self->{position} > $self->{farthest};
     return $match;
 }
 
@@ -231,8 +229,7 @@ sub trace {
     print STDERR ' ' x $self->{indent};
     $self->{indent}++ if $indent;
     my $snippet = substr(${$self->{buffer}}, $self->{position});
-    $snippet = substr($snippet, 0, 30) . "..."
-        if length $snippet > 30;
+    $snippet = substr($snippet, 0, 30) . "..." if length $snippet > 30;
     $snippet =~ s/\n/\\n/g;
     print STDERR sprintf("%-30s", $action) .
         ($indent ? " >$snippet<\n" : "\n");

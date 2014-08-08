@@ -25,7 +25,7 @@ my %WriteMakefileArgs = (
     "Template" => "2.22",
     "YAML::XS" => "0.37"
   },
-  "VERSION" => "0.22",
+  "VERSION" => "0.23",
   "test" => {
     "TESTS" => "t/*.t"
   }
