@@ -33,6 +33,7 @@ inc/TestML/Runtime/TAP.pm
 inc/TestML/Util.pm
 lib/Template/Toolkit/Simple.pm
 lib/Template/Toolkit/Simple.pod
+t/000-compile-modules.t
 t/cli.t
 t/release-pod-syntax.t
 t/render.json
