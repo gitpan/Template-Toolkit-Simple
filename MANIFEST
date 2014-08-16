@@ -44,4 +44,3 @@ t/render_xml.t
 t/render_yaml.t
 t/template/letter.tt
 t/template/signature.tt
-t/use_ok.t

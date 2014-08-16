@@ -1,3 +1,6 @@
+0.26 Fri Aug 15 21:31:26 PDT 2014
+ - Remove t/use_ok.t
+
 0.25 Fri Aug 15 20:48:08 PDT 2014
  - Add t/000-compile-modules.t
 
